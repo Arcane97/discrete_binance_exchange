@@ -1,10 +1,23 @@
 import json, requests
+from requests.packages.urllib3.util.retry import Retry
 
 from utils.constants import SETTINGS_FILE_NAME
+from utils.timeout_http_adapter import TimeoutHTTPAdapter
+
+
+BINANCE_SPOT_DEPTH_URL = "https://api.binance.com/api/v1/depth?symbol="
+
+BINANCE_API_SPOT_URL = 'https://testnet.binance.vision/api'  # https://api.binance.com/api   https://testnet.binance.vision/api
 
 
 class BinanceSpotAPI:
-    def __init__(self):
+    def __init__(self, deal_type, currency_pair):
+
+        # тип сделки (покупка или продажа)
+        self._deal_type = deal_type
+        # валютная пара
+        self._currency_pair = currency_pair
+
         self._api_key = None
         self._api_secret = None
 
@@ -21,6 +34,44 @@ class BinanceSpotAPI:
             else:
                 # error кривой json файл
                 pass
+
+    def get_binance_price(self):
+        """ Получение цены продажи на бинансе
+        :return: цена продажи на бинансе
+        """
+        try:
+            # получаем только 5 ордеров
+            limit = '&limit=5'
+            # получаем стакан с ордерами на покупку
+            query = BINANCE_SPOT_DEPTH_URL + self._currency_pair + limit
+
+            s = requests.Session()
+            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
+                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
+            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
+            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
+
+            glass_req = s.get(query)
+
+        except Exception as e:
+            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
+            # self._logger.error(e)
+            return None
+
+        # попытка расшифровать json файл
+        try:
+            glass_req_result = glass_req.json()
+            if self._deal_type == "SELL":
+                glass = glass_req_result.get('bids')
+            else:
+                glass = glass_req_result.get('asks')
+
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
+            # self._logger.error(e)
+            return None
+
+        return float(glass[0][0]) if glass is not None else None
 
 
 if __name__ == "__main__":
@@ -44,5 +95,7 @@ if __name__ == "__main__":
 
     # create_test_json_file()
 
-    obj = BinanceSpotAPI()
+    obj = BinanceSpotAPI("SELL", "BTCUSDT")
+    glass = obj.get_binance_price()
+    print(glass)
 
