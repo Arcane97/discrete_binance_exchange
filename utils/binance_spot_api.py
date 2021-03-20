@@ -71,7 +71,190 @@ class BinanceSpotAPI:
             # self._logger.error(e)
             return None
 
-        return float(glass[0][0]) if glass is not None else None
+        return float(glass[0][0]) if glass else None
+
+    def _create_payload(self, data: dict):
+        """ Создание тела запроса
+        :return тело запроса в URL (str)
+        """
+        # создание Timing security
+        timestamp = int(round(time.time() * 1000) - 300)
+        data['timestamp'] = timestamp
+        data['recvWindow'] = 10000
+
+        # создание sha256 подписи
+        payload = urllib.parse.urlencode(data)
+        api_secret = str.encode(self._api_secret)
+        secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
+        secret_hash.update(payload.encode('utf-8'))
+        sign = secret_hash.hexdigest()
+
+        # добавление подписи в тело запроса
+        data['signature'] = sign
+
+        # парсинг словаря в строку тела url запроса
+        return urllib.parse.urlencode(data)
+
+    def place_order(self, price, quantity):
+        try:
+            timestamp = int(round(time.time() * 1000) - 300)
+            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
+            data = {'timestamp': timestamp, 'symbol': self._currency_pair, 'side': self._deal_type,
+                    'type': 'MARKET', 'quantity': quantity,  # , "timeInForce": "GTC", 'price': price,
+                    'recvWindow': 10000}  # 'positionSide': 'LONG',
+            payload = urllib.parse.urlencode(data)
+            api_secret = str.encode(self._api_secret)
+            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
+            secret_hash.update(payload.encode('utf-8'))
+            sign = secret_hash.hexdigest()
+            secret = sign
+            headers = {'X-MBX-APIKEY': self._api_key}
+            data['signature'] = secret
+            payload = urllib.parse.urlencode(data)
+        except Exception as e:
+            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
+            return 'Ошибка при создании html запроса'
+
+        is_complete = False
+        while not is_complete:
+            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            try:
+                response = requests.request(method='POST', url=url, params=payload, headers=headers)
+                is_complete = True
+            except Exception as e:
+                # self._logger.error('При запросе к binance произошла ошибка')
+                # self._logger.error(e)
+                time.sleep(2)
+                # self._logger.info('Снова посылаем запрос')
+
+        try:
+            result = response.json()
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            # self._logger.error('response: ', response)
+            return str(response)
+
+        return result
+
+    def get_balance(self):
+        try:
+            timestamp = int(round(time.time() * 1000) - 300)
+            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/account'
+            data = {'timestamp': timestamp,
+                    'recvWindow': 10000}  # 'positionSide': 'LONG',
+            payload = urllib.parse.urlencode(data)
+            api_secret = str.encode(self._api_secret)
+            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
+            secret_hash.update(payload.encode('utf-8'))
+            sign = secret_hash.hexdigest()
+            secret = sign
+            headers = {'X-MBX-APIKEY': self._api_key}
+            data['signature'] = secret
+            payload = urllib.parse.urlencode(data)
+        except Exception as e:
+            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
+            return 'Ошибка при создании html запроса'
+
+        is_complete = False
+        while not is_complete:
+            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            try:
+                response = requests.request(method='GET', url=url, params=payload, headers=headers)
+                is_complete = True
+            except Exception as e:
+                # self._logger.error('При запросе к binance произошла ошибка')
+                # self._logger.error(e)
+                time.sleep(2)
+                # self._logger.info('Снова посылаем запрос')
+
+        try:
+            result = response.json()
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            # self._logger.error('response: ', response)
+            return str(response)
+
+        return result
+
+    def get_trade_list(self):
+        try:
+            timestamp = int(round(time.time() * 1000) - 300)
+            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/myTrades'
+            data = {'symbol': self._currency_pair,
+                    'timestamp': timestamp,
+                    'recvWindow': 10000}  # 'positionSide': 'LONG',
+            payload = urllib.parse.urlencode(data)
+            api_secret = str.encode(self._api_secret)
+            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
+            secret_hash.update(payload.encode('utf-8'))
+            sign = secret_hash.hexdigest()
+            secret = sign
+            headers = {'X-MBX-APIKEY': self._api_key}
+            data['signature'] = secret
+            payload = urllib.parse.urlencode(data)
+        except Exception as e:
+            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
+            return 'Ошибка при создании html запроса'
+
+        is_complete = False
+        while not is_complete:
+            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            try:
+                response = requests.request(method='GET', url=url, params=payload, headers=headers)
+                is_complete = True
+            except Exception as e:
+                # self._logger.error('При запросе к binance произошла ошибка')
+                # self._logger.error(e)
+                time.sleep(2)
+                # self._logger.info('Снова посылаем запрос')
+
+        try:
+            result = response.json()
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            # self._logger.error('response: ', response)
+            return str(response)
+
+        return result
+
+    def get_exchange_info(self):
+        try:
+            timestamp = int(round(time.time() * 1000) - 300)
+            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/exchangeInfo'
+            data = {}  # 'positionSide': 'LONG',
+            payload = urllib.parse.urlencode(data)
+            api_secret = str.encode(self._api_secret)
+            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
+            secret_hash.update(payload.encode('utf-8'))
+            sign = secret_hash.hexdigest()
+            secret = sign
+            headers = {'X-MBX-APIKEY': self._api_key}
+            data['signature'] = secret
+            payload = ''
+        except Exception as e:
+            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
+            return 'Ошибка при создании html запроса'
+
+        is_complete = False
+        while not is_complete:
+            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            try:
+                response = requests.request(method='GET', url=url, params=payload, headers=headers)
+                is_complete = True
+            except Exception as e:
+                # self._logger.error('При запросе к binance произошла ошибка')
+                # self._logger.error(e)
+                time.sleep(2)
+                # self._logger.info('Снова посылаем запрос')
+
+        try:
+            result = response.json()
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            # self._logger.error('response: ', response)
+            return str(response)
+
+        return result
 
 
 if __name__ == "__main__":
