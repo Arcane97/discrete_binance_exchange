@@ -1,13 +1,14 @@
-import json, requests
+import hashlib, hmac, http.client, json, requests, time, urllib.parse
 from requests.packages.urllib3.util.retry import Retry
 
 from utils.constants import SETTINGS_FILE_NAME
 from utils.timeout_http_adapter import TimeoutHTTPAdapter
 
 
-BINANCE_SPOT_DEPTH_URL = "https://api.binance.com/api/v1/depth?symbol="
+# BINANCE_SPOT_DEPTH_URL = "https://api.binance.com/api/v1/depth?symbol="
+BINANCE_SPOT_DEPTH_URL = "https://testnet.binance.vision/api/v1/depth?symbol="
 
-BINANCE_API_SPOT_URL = 'https://testnet.binance.vision/api'  # https://api.binance.com/api   https://testnet.binance.vision/api
+BINANCE_PRIVATE_API_SPOT_URL = 'https://testnet.binance.vision'  # https://api.binance.com/api   https://testnet.binance.vision/api
 
 
 class BinanceSpotAPI:
@@ -96,26 +97,21 @@ class BinanceSpotAPI:
         return urllib.parse.urlencode(data)
 
     def place_order(self, price, quantity):
-        try:
-            timestamp = int(round(time.time() * 1000) - 300)
-            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
-            data = {'timestamp': timestamp, 'symbol': self._currency_pair, 'side': self._deal_type,
-                    'type': 'MARKET', 'quantity': quantity,  # , "timeInForce": "GTC", 'price': price,
-                    'recvWindow': 10000}  # 'positionSide': 'LONG',
-            payload = urllib.parse.urlencode(data)
-            api_secret = str.encode(self._api_secret)
-            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
-            secret_hash.update(payload.encode('utf-8'))
-            sign = secret_hash.hexdigest()
-            secret = sign
-            headers = {'X-MBX-APIKEY': self._api_key}
-            data['signature'] = secret
-            payload = urllib.parse.urlencode(data)
-        except Exception as e:
-            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
-            return 'Ошибка при создании html запроса'
+        url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
+        headers = {'X-MBX-APIKEY': self._api_key}
+        data = {
+            'symbol': self._currency_pair,
+            'side': self._deal_type,
+            'type': 'MARKET',
+            'quantity': quantity,
+        }
+        # 'positionSide': 'LONG',
+        # 'timeInForce': "GTC",
+        # 'price': price,
+        payload = self._create_payload(data)
 
         is_complete = False
+        response = None
         while not is_complete:
             # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
             try:
@@ -137,25 +133,12 @@ class BinanceSpotAPI:
         return result
 
     def get_balance(self):
-        try:
-            timestamp = int(round(time.time() * 1000) - 300)
-            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/account'
-            data = {'timestamp': timestamp,
-                    'recvWindow': 10000}  # 'positionSide': 'LONG',
-            payload = urllib.parse.urlencode(data)
-            api_secret = str.encode(self._api_secret)
-            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
-            secret_hash.update(payload.encode('utf-8'))
-            sign = secret_hash.hexdigest()
-            secret = sign
-            headers = {'X-MBX-APIKEY': self._api_key}
-            data['signature'] = secret
-            payload = urllib.parse.urlencode(data)
-        except Exception as e:
-            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
-            return 'Ошибка при создании html запроса'
+        url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/account'
+        headers = {'X-MBX-APIKEY': self._api_key}
+        payload = self._create_payload({})
 
         is_complete = False
+        response = None
         while not is_complete:
             # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
             try:
@@ -166,7 +149,6 @@ class BinanceSpotAPI:
                 # self._logger.error(e)
                 time.sleep(2)
                 # self._logger.info('Снова посылаем запрос')
-
         try:
             result = response.json()
         except Exception as e:
@@ -177,26 +159,13 @@ class BinanceSpotAPI:
         return result
 
     def get_trade_list(self):
-        try:
-            timestamp = int(round(time.time() * 1000) - 300)
-            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/myTrades'
-            data = {'symbol': self._currency_pair,
-                    'timestamp': timestamp,
-                    'recvWindow': 10000}  # 'positionSide': 'LONG',
-            payload = urllib.parse.urlencode(data)
-            api_secret = str.encode(self._api_secret)
-            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
-            secret_hash.update(payload.encode('utf-8'))
-            sign = secret_hash.hexdigest()
-            secret = sign
-            headers = {'X-MBX-APIKEY': self._api_key}
-            data['signature'] = secret
-            payload = urllib.parse.urlencode(data)
-        except Exception as e:
-            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
-            return 'Ошибка при создании html запроса'
+        url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/myTrades'
+        headers = {'X-MBX-APIKEY': self._api_key}
+        data = {'symbol': self._currency_pair}
+        payload = self._create_payload(data)
 
         is_complete = False
+        response = None
         while not is_complete:
             # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
             try:
@@ -218,24 +187,12 @@ class BinanceSpotAPI:
         return result
 
     def get_exchange_info(self):
-        try:
-            timestamp = int(round(time.time() * 1000) - 300)
-            url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/exchangeInfo'
-            data = {}  # 'positionSide': 'LONG',
-            payload = urllib.parse.urlencode(data)
-            api_secret = str.encode(self._api_secret)
-            secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
-            secret_hash.update(payload.encode('utf-8'))
-            sign = secret_hash.hexdigest()
-            secret = sign
-            headers = {'X-MBX-APIKEY': self._api_key}
-            data['signature'] = secret
-            payload = ''
-        except Exception as e:
-            # self._logger.critical('Ошибка при создании html запроса', exc_info=True)
-            return 'Ошибка при создании html запроса'
+        url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/exchangeInfo'
+        headers = {'X-MBX-APIKEY': self._api_key}
+        payload = ''
 
         is_complete = False
+        response = None
         while not is_complete:
             # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
             try:
@@ -278,7 +235,21 @@ if __name__ == "__main__":
 
     # create_test_json_file()
 
-    obj = BinanceSpotAPI("SELL", "BTCUSDT")
-    glass = obj.get_binance_price()
-    print(glass)
+    obj = BinanceSpotAPI("BUY", "ETHBTC")
+    result_of_placement_order = obj.place_order(1500, 0.1)
+    print(result_of_placement_order)
+
+    # glass_price = obj.get_binance_price()
+    # print(glass_price)
+
+    trade_list = obj.get_trade_list()
+    print(trade_list)
+
+    # exchange_info = obj.get_exchange_info()
+    # print(exchange_info)
+    # import pprint
+    # pprint.pprint(exchange_info)
+
+    # balance = obj.get_balance()
+    # print(balance)
 
