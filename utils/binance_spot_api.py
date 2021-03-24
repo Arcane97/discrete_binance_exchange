@@ -1,4 +1,4 @@
-import hashlib, hmac, http.client, json, requests, time, urllib.parse
+import hashlib, hmac, json, requests, time, urllib.parse
 from requests.packages.urllib3.util.retry import Retry
 
 from utils.constants import SETTINGS_FILE_NAME
@@ -96,7 +96,7 @@ class BinanceSpotAPI:
         # парсинг словаря в строку тела url запроса
         return urllib.parse.urlencode(data)
 
-    def place_order(self, price, quantity):
+    def place_order(self, quantity):
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # create_test_json_file()
 
     obj = BinanceSpotAPI("BUY", "ETHBTC")
-    result_of_placement_order = obj.place_order(1500, 0.1)
+    result_of_placement_order = obj.place_order(0.1)
     print(result_of_placement_order)
 
     # glass_price = obj.get_binance_price()
