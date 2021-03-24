@@ -1,8 +1,9 @@
-import hashlib, hmac, json, requests, time, urllib.parse
+import requests, time
 from requests.packages.urllib3.util.retry import Retry
 
-from utils.constants import SETTINGS_FILE_NAME
 from utils.timeout_http_adapter import TimeoutHTTPAdapter
+
+from utils.binance_base_api import BinanceBaseAPI
 
 
 # BINANCE_SPOT_DEPTH_URL = "https://api.binance.com/api/v1/depth?symbol="
@@ -11,8 +12,9 @@ BINANCE_SPOT_DEPTH_URL = "https://testnet.binance.vision/api/v1/depth?symbol="
 BINANCE_PRIVATE_API_SPOT_URL = 'https://testnet.binance.vision'  # https://api.binance.com/api   https://testnet.binance.vision/api
 
 
-class BinanceSpotAPI:
+class BinanceSpotAPI(BinanceBaseAPI):
     def __init__(self, deal_type, currency_pair):
+        super().__init__(dict_key_prefix='binance_spot')
 
         # тип сделки (покупка или продажа)
         self._deal_type = deal_type
@@ -23,18 +25,6 @@ class BinanceSpotAPI:
         self._api_secret = None
 
         self._read_api_keys_from_file()
-
-    def _read_api_keys_from_file(self):  # todo подумать над реализвацией сохранения api ключей
-        """ Считывание апи ключей из файла
-        """
-        with open(SETTINGS_FILE_NAME, "r") as file:
-            settings_data = json.load(file)
-            if isinstance(settings_data, dict):
-                self._api_key = settings_data.get('binance_spot_api_key')
-                self._api_secret = settings_data.get('binance_spot_api_secret')
-            else:
-                # error кривой json файл
-                pass
 
     def get_binance_price(self):
         """ Получение цены продажи на бинансе
@@ -73,28 +63,6 @@ class BinanceSpotAPI:
             return None
 
         return float(glass[0][0]) if glass else None
-
-    def _create_payload(self, data: dict):
-        """ Создание тела запроса
-        :return тело запроса в URL (str)
-        """
-        # создание Timing security
-        timestamp = int(round(time.time() * 1000) - 300)
-        data['timestamp'] = timestamp
-        data['recvWindow'] = 10000
-
-        # создание sha256 подписи
-        payload = urllib.parse.urlencode(data)
-        api_secret = str.encode(self._api_secret)
-        secret_hash = hmac.new(key=api_secret, digestmod=hashlib.sha256)
-        secret_hash.update(payload.encode('utf-8'))
-        sign = secret_hash.hexdigest()
-
-        # добавление подписи в тело запроса
-        data['signature'] = sign
-
-        # парсинг словаря в строку тела url запроса
-        return urllib.parse.urlencode(data)
 
     def place_order(self, quantity):
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
@@ -215,7 +183,8 @@ class BinanceSpotAPI:
 
 
 if __name__ == "__main__":
-    import os
+    import json, os
+    from utils.constants import SETTINGS_FILE_NAME
 
     def create_test_json_file():
         if not os.path.exists(SETTINGS_FILE_NAME):

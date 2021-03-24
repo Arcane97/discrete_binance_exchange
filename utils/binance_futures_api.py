@@ -1,30 +1,20 @@
-import json, requests
+import requests
 
-from utils.constants import SETTINGS_FILE_NAME
+from utils.binance_base_api import BinanceBaseAPI
 
 
-class BinanceFuturesAPI:
+class BinanceFuturesAPI(BinanceBaseAPI):
     def __init__(self):
+        super().__init__(dict_key_prefix='binance_futures')
         self._api_key = None
         self._api_secret = None
 
         self._read_api_keys_from_file()
 
-    def _read_api_keys_from_file(self):  # todo подумать над реализвацией сохранения api ключей
-        """ Считывание апи ключей из файла
-        """
-        with open(SETTINGS_FILE_NAME, "r") as file:
-            settings_data = json.load(file)
-            if isinstance(settings_data, dict):
-                self._api_key = settings_data.get('binance_futures_api_key')
-                self._api_secret = settings_data.get('binance_futures_api_secret')
-            else:
-                # error кривой json файл
-                pass
-
 
 if __name__ == "__main__":
-    import os
+    import json, os
+    from utils.constants import SETTINGS_FILE_NAME
 
     def create_test_json_file():
         if not os.path.exists(SETTINGS_FILE_NAME):
