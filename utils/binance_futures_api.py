@@ -47,6 +47,33 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return history[-1]['price']
 
+    def get_exchange_info(self):
+        url = 'https://fapi.binance.com' + '/fapi/v1/exchangeInfo'
+        headers = {'X-MBX-APIKEY': self._api_key}
+        payload = ''
+
+        is_complete = False
+        response = None
+        while not is_complete:
+            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            try:
+                response = requests.request(method='GET', url=url, params=payload, headers=headers)
+                is_complete = True
+            except Exception as e:
+                # self._logger.error('При запросе к binance произошла ошибка')
+                # self._logger.error(e)
+                time.sleep(2)
+                # self._logger.info('Снова посылаем запрос')
+
+        try:
+            result = response.json()
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            # self._logger.error('response: ', response)
+            return str(response)
+
+        return result
+
     def place_order(self, price, quantity, side):
         url = "https://testnet.binancefuture.com/fapi/v1/order"
         headers = {'X-MBX-APIKEY': self._api_key}
@@ -118,4 +145,7 @@ if __name__ == "__main__":
     # create_test_json_file()
 
     obj = BinanceFuturesAPI("BUY", "BTCUSDT")
-    obj.place_short(0.061)
+    result = obj.get_exchange_info()
+    # print(result)
+    import pprint
+    pprint.pprint(result)
