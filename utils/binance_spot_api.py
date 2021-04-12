@@ -124,6 +124,9 @@ class BinanceSpotAPI(BinanceBaseAPI):
             # self._logger.error('response: ', response)
             return str(response)
 
+        if 'balances' in result:
+            return result['balances']
+
         return result
 
     def get_trade_list(self):
