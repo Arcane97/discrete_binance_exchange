@@ -6,8 +6,8 @@ from utils.timeout_http_adapter import TimeoutHTTPAdapter
 from utils.binance_base_api import BinanceBaseAPI
 
 
-# BINANCE_SPOT_DEPTH_URL = "https://api.binance.com/api/v1/depth?symbol="
-BINANCE_SPOT_DEPTH_URL = "https://testnet.binance.vision/api/v1/depth?symbol="
+# BINANCE_SPOT_API_URL = "https://api.binance.com"
+BINANCE_SPOT_API_URL = "https://testnet.binance.vision"
 
 BINANCE_PRIVATE_API_SPOT_URL = 'https://testnet.binance.vision'  # https://api.binance.com/api   https://testnet.binance.vision/api
 
@@ -26,6 +26,37 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         self._read_api_keys_from_file()
 
+    def get_binance_history(self):
+        """ Получение истории торгов на бинансе
+        :return: история торгов на бинансе
+        """
+        try:
+            now_time = int(time.time() * 1000)
+            time_minute_ago = now_time - 60000
+            query = f'{BINANCE_SPOT_API_URL}/api/v1/aggTrades?symbol={self._currency_pair}&startTime={time_minute_ago}&endTime={now_time}&limit=1000'
+
+            s = requests.Session()
+            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
+                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
+            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
+            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
+
+            history_req = s.get(query)
+
+        except Exception as e:
+            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
+            # self._logger.error(e)
+            return None
+
+        # попытка расшифровать json файл
+        try:
+            history_req_result = history_req.json()
+            return history_req_result
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
+            # self._logger.error(e)
+            return None
+
     def get_binance_price(self):
         """ Получение цены продажи на бинансе
         :return: цена продажи на бинансе
@@ -34,7 +65,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
             # получаем только 5 ордеров
             limit = '&limit=5'
             # получаем стакан с ордерами на покупку
-            query = BINANCE_SPOT_DEPTH_URL + self._currency_pair + limit
+            query = BINANCE_SPOT_API_URL + '/api/v1/depth?symbol=' + self._currency_pair + limit
 
             s = requests.Session()
             retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
