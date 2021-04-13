@@ -26,9 +26,9 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         self._read_api_keys_from_file()
 
-    def get_binance_history(self):
-        """ Получение истории торгов на бинансе
-        :return: история торгов на бинансе
+    def get_binance_history_per_minute(self):
+        """ Получение истории торгов на бинансе за минуту
+        :return: история торгов на бинансе за минуту
         """
         try:
             now_time = int(time.time() * 1000)
@@ -56,6 +56,22 @@ class BinanceSpotAPI(BinanceBaseAPI):
             # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
             # self._logger.error(e)
             return None
+
+    def get_average_price_per_minute(self):
+        """ Получение средней цены за минуту
+        :return: средняя цена за минуту
+        """
+        history = self.get_binance_history_per_minute()
+        if not history:
+            return None
+
+        sum_of_all_trades = 0.0
+        qty_of_all_trades = 0.0
+        for deal in history:
+            sum_of_all_trades += float(deal['p']) * float(deal['q'])
+            qty_of_all_trades += float(deal['q'])
+
+        return sum_of_all_trades / qty_of_all_trades
 
     def get_binance_price(self):
         """ Получение цены продажи на бинансе
