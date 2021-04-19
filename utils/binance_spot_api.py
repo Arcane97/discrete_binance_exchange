@@ -73,9 +73,40 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         return sum_of_all_trades / qty_of_all_trades
 
-    def get_binance_price(self):
-        """ Получение цены продажи на бинансе
-        :return: цена продажи на бинансе
+    def get_average_price(self):
+        """ Получение средней цены за 5 минут
+        """
+        try:
+            query = f'{BINANCE_SPOT_API_URL}/api/v3/avgPrice?symbol={self._currency_pair}'
+
+            s = requests.Session()
+            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
+                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
+            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
+            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
+
+            average_price_req = s.get(query)
+
+        except Exception as e:
+            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
+            # self._logger.error(e)
+            return None
+
+        # попытка расшифровать json файл
+        try:
+            average_price_req_result = average_price_req.json()
+            if 'price' in average_price_req_result:
+                return average_price_req_result.get('price')
+
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
+            # self._logger.error(e)
+            return None
+        return None
+
+    def get_binance_glass(self):
+        """ Получение стакана на бинансе
+        :return: стакан на бинансе
         """
         try:
             # получаем только 5 ордеров
