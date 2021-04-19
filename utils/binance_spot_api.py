@@ -93,7 +93,26 @@ class BinanceSpotAPI(BinanceBaseAPI):
             # self._logger.error(e)
             return None
 
-        return float(glass[0][0]) if glass else None
+        return glass if glass else None
+
+    def get_price(self):
+        # multiplierDown 0.2
+        # multiplierUp 5
+        glass = self.get_binance_glass()
+
+        average_price = self.get_average_price()
+        top_limit = average_price * 5
+        bottom_limit = average_price * 0.2
+
+        mapping_percent_price_filter = lambda order: bottom_limit < float(order[0]) < top_limit
+        filtered_glass = list(filter(mapping_percent_price_filter, glass))
+
+        if len(filtered_glass) == 0:
+            return None
+        if len(filtered_glass) == 1:
+            return float(filtered_glass[0][0])
+
+        return float(filtered_glass[len(filtered_glass)//2][0])
 
     def place_order(self, quantity):
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
