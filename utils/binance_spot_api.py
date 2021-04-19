@@ -26,53 +26,6 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         self._read_api_keys_from_file()
 
-    def get_binance_history_per_minute(self):
-        """ Получение истории торгов на бинансе за минуту
-        :return: история торгов на бинансе за минуту
-        """
-        try:
-            now_time = int(time.time() * 1000)
-            time_minute_ago = now_time - 60000
-            query = f'{BINANCE_SPOT_API_URL}/api/v1/aggTrades?symbol={self._currency_pair}&startTime={time_minute_ago}&endTime={now_time}&limit=1000'
-
-            s = requests.Session()
-            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
-                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
-            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
-            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
-
-            history_req = s.get(query)
-
-        except Exception as e:
-            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
-            # self._logger.error(e)
-            return None
-
-        # попытка расшифровать json файл
-        try:
-            history_req_result = history_req.json()
-            return history_req_result
-        except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
-            # self._logger.error(e)
-            return None
-
-    def get_average_price_per_minute(self):
-        """ Получение средней цены за минуту
-        :return: средняя цена за минуту
-        """
-        history = self.get_binance_history_per_minute()
-        if not history:
-            return None
-
-        sum_of_all_trades = 0.0
-        qty_of_all_trades = 0.0
-        for deal in history:
-            sum_of_all_trades += float(deal['p']) * float(deal['q'])
-            qty_of_all_trades += float(deal['q'])
-
-        return sum_of_all_trades / qty_of_all_trades
-
     def get_average_price(self):
         """ Получение средней цены за 5 минут
         """
