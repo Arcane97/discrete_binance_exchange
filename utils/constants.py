@@ -2,6 +2,27 @@ from definitions import ROOT_DIR
 
 SETTINGS_FILE_NAME = ROOT_DIR + "\\discrete_binance_exchange_settings.json"
 
+BINANCE_SPOT_FILTERS = {'BNBBTC': {'minPrice': 1e-07, 'minQty': 0.01},
+                        'BNBBUSD': {'minPrice': 0.0001, 'minQty': 0.01},
+                        'BNBUSDT': {'minPrice': 0.0001, 'minQty': 0.01},
+                        'BTCBUSD': {'minPrice': 0.01, 'minQty': 1e-06},
+                        'BTCUSDT': {'minPrice': 0.01, 'minQty': 1e-06},
+                        'ETHBTC': {'minPrice': 1e-06, 'minQty': 1e-05},
+                        'ETHBUSD': {'minPrice': 0.01, 'minQty': 1e-05},
+                        'ETHUSDT': {'minPrice': 0.01, 'minQty': 1e-05},
+                        'LTCBNB': {'minPrice': 0.001, 'minQty': 1e-05},
+                        'LTCBTC': {'minPrice': 1e-06, 'minQty': 1e-05},
+                        'LTCBUSD': {'minPrice': 0.01, 'minQty': 1e-05},
+                        'LTCUSDT': {'minPrice': 0.01, 'minQty': 1e-05},
+                        'TRXBNB': {'minPrice': 1e-06, 'minQty': 0.1},
+                        'TRXBTC': {'minPrice': 1e-08, 'minQty': 0.1},
+                        'TRXBUSD': {'minPrice': 1e-05, 'minQty': 0.1},
+                        'TRXUSDT': {'minPrice': 1e-05, 'minQty': 0.1},
+                        'XRPBNB': {'minPrice': 1e-05, 'minQty': 0.1},
+                        'XRPBTC': {'minPrice': 1e-08, 'minQty': 0.1},
+                        'XRPBUSD': {'minPrice': 1e-05, 'minQty': 0.1},
+                        'XRPUSDT': {'minPrice': 1e-05, 'minQty': 0.1}}
+
 BINANCE_FUTURES_FILTERS = {
     '1INCHUSDT': {'minPrice': '0.0001',
                   'minQty': '1',
@@ -459,7 +480,6 @@ BINANCE_FUTURES_FILTERS = {
                 'minQty': '0.1',
                 'multiplierDown': '0.8500',
                 'multiplierUp': '1.1500'}}
-
 
 if __name__ == "__main__":
     print(SETTINGS_FILE_NAME)

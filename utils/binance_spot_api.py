@@ -277,23 +277,23 @@ if __name__ == "__main__":
     # result_of_placement_order = obj.place_order(1, 0.1)
     # print(result_of_placement_order)
 
-    price = obj.get_satisfy_price()
-    print('price', price)
+    # price = obj.get_satisfy_price()
+    # print('price', price)
 
     # trade_list = obj.get_trade_list()
     # print(trade_list)
 
     exchange_info = obj.get_exchange_info().get('symbols')
     symbols_filters = {pair_info['symbol']: {
-        'tickSize': pair_info['filters'][0]['tickSize'],  # минимальная цена  todo обработать
-        'stepSize': pair_info['filters'][2]['stepSize'],  # минимальное количество
+        'minPrice': float(pair_info['filters'][0]['tickSize']),  # минимальная цена  todo обработать
+        'minQty': float(pair_info['filters'][2]['stepSize']),  # минимальное количество
     } for pair_info in exchange_info}
 
     import pprint
 
     pprint.pprint(symbols_filters)
     # pprint.pprint(exchange_info)
-    print([filt['stepSize'] for filt in symbols_filters.values()])
+    # print([filt['stepSize'] for filt in symbols_filters.values()])
 
     # balance = obj.get_balance()
     # print(balance)
