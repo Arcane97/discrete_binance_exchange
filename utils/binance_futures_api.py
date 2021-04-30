@@ -11,7 +11,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
     def __init__(self, deal_type, currency_pair):
         super().__init__(dict_key_prefix='binance_futures')
 
-        # тип сделки (покупка или продажа)
+        # тип сделки (покупка или продажа)  BUY - long, SELL - short
         self._deal_type = deal_type
         # валютная пара
         self._currency_pair = currency_pair
@@ -134,12 +134,15 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return result
 
-    def place_order(self, price, quantity, side):
+    def place_order(self, quantity):
         url = "https://testnet.binancefuture.com/fapi/v1/order"  # todo
+        # удовлетворяющая цена
+        price = self.get_satisfy_price()
+
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {
             'symbol': self._currency_pair,
-            'side': side,
+            'side': self._deal_type,
             'type': 'LIMIT',
             "timeInForce": "GTC",
             'price': price,
@@ -169,16 +172,6 @@ class BinanceFuturesAPI(BinanceBaseAPI):
             # self._logger.error(response)
             return str(response)
 
-        return result
-
-    def place_long(self, quantity):  # todo ограничение по балансу
-        price = round(self.get_price(True) * 1.2)
-        result = self.place_order(price, quantity, 'BUY')
-        return result
-
-    def place_short(self, quantity):  # todo ограничение по балансу
-        price = round(self.get_price(False) * 0.8)
-        result = self.place_order(price, quantity, 'SELL')
         return result
 
 
