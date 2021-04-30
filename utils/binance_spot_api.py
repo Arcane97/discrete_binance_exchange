@@ -62,8 +62,8 @@ class BinanceSpotAPI(BinanceBaseAPI):
         :return: стакан на бинансе
         """
         try:
-            # получаем только 5 ордеров
-            limit = '&limit=5'
+            # получаем 5000 ордеров
+            limit = '&limit=5000'
             # получаем стакан с ордерами на покупку
             query = BINANCE_SPOT_API_URL + '/api/v1/depth?symbol=' + self._currency_pair + limit
 
@@ -95,16 +95,24 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         return glass if glass else None
 
-    def get_price(self):
+    def get_satisfy_price(self):
+        """ Получение удовлетворяющей цены для точной покупки или продажи
+        Чтобы ордер сразу совершился
+        """
         # multiplierDown 0.2
         # multiplierUp 5
+        # получение стакана
         glass = self.get_binance_glass()
-
+        # получение средней цены
         average_price = self.get_average_price()
+        # ограничение цены сверху
         top_limit = average_price * 5
+        # ограничение цены снизу
         bottom_limit = average_price * 0.2
 
+        # лямбда функция фильтра: убирает из стакана не удовлетворяющие ордера в интервале цен [bottom_limit, top_limit]
         mapping_percent_price_filter = lambda order: bottom_limit < float(order[0]) < top_limit
+        # отфильтрованный стакан
         filtered_glass = list(filter(mapping_percent_price_filter, glass))
 
         if len(filtered_glass) == 0:
@@ -115,12 +123,19 @@ class BinanceSpotAPI(BinanceBaseAPI):
         return float(filtered_glass[len(filtered_glass)//2][0])
 
     def place_order(self, quantity):
+        """ Постановка ордера
+        """
+        # Получение цены
+        price = self.get_satisfy_price()
+
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {
             'symbol': self._currency_pair,
             'side': self._deal_type,
-            'type': 'MARKET',
+            'type': 'LIMIT',
+            'timeInForce': "GTC",
+            'price': price,
             'quantity': quantity,
         }
         # 'positionSide': 'LONG',
@@ -239,6 +254,7 @@ if __name__ == "__main__":
     import json, os
     from utils.constants import SETTINGS_FILE_NAME
 
+
     def create_test_json_file():
         if not os.path.exists(SETTINGS_FILE_NAME):
             with open(SETTINGS_FILE_NAME, "w") as file:
@@ -257,21 +273,27 @@ if __name__ == "__main__":
 
     # create_test_json_file()
 
-    obj = BinanceSpotAPI("BUY", "ETHBTC")
-    result_of_placement_order = obj.place_order(0.1)
-    print(result_of_placement_order)
+    obj = BinanceSpotAPI("SELL", "BTCUSDT")
+    # result_of_placement_order = obj.place_order(1, 0.1)
+    # print(result_of_placement_order)
 
-    # glass_price = obj.get_binance_price()
-    # print(glass_price)
+    price = obj.get_satisfy_price()
+    print('price', price)
 
-    trade_list = obj.get_trade_list()
-    print(trade_list)
+    # trade_list = obj.get_trade_list()
+    # print(trade_list)
 
-    # exchange_info = obj.get_exchange_info()
-    # print(exchange_info)
-    # import pprint
+    exchange_info = obj.get_exchange_info().get('symbols')
+    symbols_filters = {pair_info['symbol']: {
+        'tickSize': pair_info['filters'][0]['tickSize'],  # минимальная цена  todo обработать
+        'stepSize': pair_info['filters'][2]['stepSize'],  # минимальное количество
+    } for pair_info in exchange_info}
+
+    import pprint
+
+    pprint.pprint(symbols_filters)
     # pprint.pprint(exchange_info)
+    print([filt['stepSize'] for filt in symbols_filters.values()])
 
     # balance = obj.get_balance()
     # print(balance)
-
