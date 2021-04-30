@@ -1,10 +1,16 @@
 import hashlib
 import hmac
 import json
+import requests
 import time
 import urllib.parse
 
+from requests.packages.urllib3.util.retry import Retry
+from utils.timeout_http_adapter import TimeoutHTTPAdapter
+
 from utils.constants import SETTINGS_FILE_NAME
+
+# todo log
 
 
 class BinanceBaseAPI:
@@ -47,3 +53,29 @@ class BinanceBaseAPI:
 
         # парсинг словаря в строку тела url запроса
         return urllib.parse.urlencode(data)
+
+    def _make_get_request(self, url):
+        try:
+            s = requests.Session()
+            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
+                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
+            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
+            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
+
+            req = s.get(url)
+
+        except Exception as e:
+            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
+            # self._logger.error(e)
+            return None
+
+        # попытка расшифровать json файл
+        try:
+            req_result = req.json()
+
+        except Exception as e:
+            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
+            # self._logger.error(e)
+            return None
+
+        return req_result
