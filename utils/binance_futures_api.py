@@ -76,8 +76,8 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         Чтобы ордер сразу совершился
         """
         # множители для ограничения цены сверху и снизу
-        multiplier_up = float(BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierUp'])
-        multiplier_down = float(BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierDown'])
+        multiplier_up = BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierUp']
+        multiplier_down = BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierDown']
         # получение стакана
         glass = self.get_binance_glass()
         # получение средней цены
