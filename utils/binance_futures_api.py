@@ -38,6 +38,17 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return glass if glass else None
 
+    def get_average_price(self):
+        """ Получение средней цены
+        """
+        url = BINANCE_FUTURES_API_URL + "/fapi/v1/premiumIndex?symbol=" + self._currency_pair
+        average_price_req_result = self._make_get_request(url)
+
+        if not isinstance(average_price_req_result, dict):
+            return None
+
+        return float(average_price_req_result.get('markPrice'))
+
     def get_binance_futures_history(self):  # todo стакан
         url = 'https://fapi.binance.com/fapi/v1/trades?symbol=' + self._currency_pair
         is_complete = False
@@ -180,3 +191,7 @@ if __name__ == "__main__":
     #     'multiplierUp': pair_info['filters'][6]['multiplierUp'],
     # } for pair_info in exchange_info}
     # pprint.pprint(symbols_filters)
+
+    average_price = obj.get_average_price()
+    print(average_price, type(average_price))
+
