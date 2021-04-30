@@ -71,6 +71,34 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return result
 
+    def get_satisfy_price(self):
+        """ Получение удовлетворяющей цены для точной покупки или продажи
+        Чтобы ордер сразу совершился
+        """
+        # множители для ограничения цены сверху и снизу
+        multiplier_up = float(BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierUp'])
+        multiplier_down = float(BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierDown'])
+        # получение стакана
+        glass = self.get_binance_glass()
+        # получение средней цены
+        average_price = self.get_average_price()
+        # ограничение цены сверху
+        top_limit = average_price * multiplier_up
+        # ограничение цены снизу
+        bottom_limit = average_price * multiplier_down
+
+        # лямбда функция фильтра: убирает из стакана не удовлетворяющие ордера в интервале цен [bottom_limit, top_limit]
+        mapping_percent_price_filter = lambda order: bottom_limit < float(order[0]) < top_limit
+        # отфильтрованный стакан
+        filtered_glass = list(filter(mapping_percent_price_filter, glass))
+
+        if len(filtered_glass) == 0:
+            return None
+        if len(filtered_glass) == 1:
+            return float(filtered_glass[0][0])
+
+        return float(filtered_glass[len(filtered_glass)//2][0])
+
     def get_price(self, is_buy=True):
         history = self.get_binance_futures_history()
         for deal in reversed(history):
@@ -192,6 +220,9 @@ if __name__ == "__main__":
     # } for pair_info in exchange_info}
     # pprint.pprint(symbols_filters)
 
-    average_price = obj.get_average_price()
-    print(average_price, type(average_price))
+    # average_price = obj.get_average_price()
+    # print(average_price, type(average_price))
+
+    # satisfy_price = obj.get_satisfy_price()
+    # print(satisfy_price)
 
