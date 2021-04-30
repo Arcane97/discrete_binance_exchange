@@ -1,7 +1,7 @@
 import requests, time
 
 from utils.binance_base_api import BinanceBaseAPI
-
+from utils.constants import BINANCE_FUTURES_FILTERS
 
 BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
 # BINANCE_FUTURES_API_URL = "https://testnet.binancefuture.com"
@@ -96,7 +96,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         return result
 
     def place_order(self, price, quantity, side):
-        url = "https://testnet.binancefuture.com/fapi/v1/order"
+        url = "https://testnet.binancefuture.com/fapi/v1/order"  # todo
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {
             'symbol': self._currency_pair,
@@ -166,7 +166,17 @@ if __name__ == "__main__":
     # create_test_json_file()
 
     obj = BinanceFuturesAPI("BUY", "BTCUSDT")
-    result = obj.get_binance_glass()
-    print(result)
-    # import pprint
+    # result = obj.get_binance_glass()
+    # print(result)
+    import pprint
     # pprint.pprint(result)
+
+    # exchange_info = obj.get_exchange_info().get('symbols')
+    # # pprint.pprint(exchange_info)
+    # symbols_filters = {pair_info['symbol']: {
+    #     'minPrice': pair_info['filters'][0]['tickSize'],  # минимальная цена  todo обработать
+    #     'minQty': pair_info['filters'][2]['stepSize'],  # минимальное количество
+    #     'multiplierDown': pair_info['filters'][6]['multiplierDown'],
+    #     'multiplierUp': pair_info['filters'][6]['multiplierUp'],
+    # } for pair_info in exchange_info}
+    # pprint.pprint(symbols_filters)
