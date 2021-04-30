@@ -3,6 +3,10 @@ import requests, time
 from utils.binance_base_api import BinanceBaseAPI
 
 
+BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
+# BINANCE_FUTURES_API_URL = "https://testnet.binancefuture.com"
+
+
 class BinanceFuturesAPI(BinanceBaseAPI):
     def __init__(self, deal_type, currency_pair):
         super().__init__(dict_key_prefix='binance_futures')
@@ -16,6 +20,23 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         self._api_secret = None
 
         self._read_api_keys_from_file()
+
+    def get_binance_glass(self):
+        """ Получение стакана на бинансе
+        :return: стакан на бинансе
+        """
+        url = BINANCE_FUTURES_API_URL + '/fapi/v1/depth?symbol=' + self._currency_pair + '&limit=1000'
+        glass_req_result = self._make_get_request(url)
+
+        if not isinstance(glass_req_result, dict):
+            return None
+
+        if self._deal_type == "SELL":
+            glass = glass_req_result.get('bids')
+        else:
+            glass = glass_req_result.get('asks')
+
+        return glass if glass else None
 
     def get_binance_futures_history(self):  # todo стакан
         url = 'https://fapi.binance.com/fapi/v1/trades?symbol=' + self._currency_pair
@@ -145,7 +166,7 @@ if __name__ == "__main__":
     # create_test_json_file()
 
     obj = BinanceFuturesAPI("BUY", "BTCUSDT")
-    result = obj.get_exchange_info()
-    # print(result)
-    import pprint
-    pprint.pprint(result)
+    result = obj.get_binance_glass()
+    print(result)
+    # import pprint
+    # pprint.pprint(result)
