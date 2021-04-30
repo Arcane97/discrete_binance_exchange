@@ -206,7 +206,7 @@ if __name__ == "__main__":
     # exchange_info = obj.get_exchange_info().get('symbols')
     # # pprint.pprint(exchange_info)
     # symbols_filters = {pair_info['symbol']: {
-    #     'minPrice': pair_info['filters'][0]['tickSize'],  # минимальная цена  todo обработать
+    #     'minPrice': pair_info['filters'][0]['tickSize'],  # минимальная цена
     #     'minQty': pair_info['filters'][2]['stepSize'],  # минимальное количество
     #     'multiplierDown': pair_info['filters'][6]['multiplierDown'],
     #     'multiplierUp': pair_info['filters'][6]['multiplierUp'],

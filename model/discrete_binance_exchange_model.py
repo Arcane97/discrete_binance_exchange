@@ -1,6 +1,8 @@
 from math import isclose
 from PyQt5.QtCore import QObject, pyqtSignal
 
+from utils.constants import BINANCE_SPOT_FILTERS, BINANCE_FUTURES_FILTERS
+
 
 class DiscreteBinanceExchangeModel(QObject):
     """ Класс реализующий покупку или продажу валюты на бирже Binance.
@@ -21,6 +23,7 @@ class DiscreteBinanceExchangeModel(QObject):
         self._currency_pair = "BTCUSDT"
         # количество валюты
         self._currency_amount = 2
+        # todo добавить количество валюты во фьючерсах
         # число разбиений
         self._number_of_splits = 10
 
@@ -81,14 +84,23 @@ class DiscreteBinanceExchangeModel(QObject):
         """ Старт торгов с разбиением
         """
         self._is_running_trades = True
-        delta_amount = round(self._currency_amount / self._number_of_splits, 3)
-        if delta_amount < 0.001:
+        # количество цифр после запятой у минимального количества валюты
+        exponent = -max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQtyExponent'],
+                        BINANCE_FUTURES_FILTERS[self._currency_pair]['minQtyExponent'])
+        # минимальное количество валюты
+        min_qty = max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQty'],
+                      BINANCE_FUTURES_FILTERS[self._currency_pair]['minQty'])
+        # количество валюты в порции
+        delta_amount = round(self._currency_amount / self._number_of_splits, exponent)
+        if delta_amount < min_qty:
             print('Сделайте меньше разбиений')  # todo Лог
             return
 
-        while self._is_running_trades and self._currency_amount > 0.001:
-            if self._currency_amount - delta_amount < 0.002:
-                delta_amount = round(self._currency_amount, 3)
+        while self._is_running_trades and self._currency_amount > min_qty:
+            # если после следующей сделки количество валюты будет меньше минимума,
+            # используем всю оставшуюся валюту
+            if self._currency_amount - delta_amount < min_qty:
+                delta_amount = round(self._currency_amount, exponent)
 
             self._trade(delta_amount)
 

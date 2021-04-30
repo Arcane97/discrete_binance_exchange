@@ -283,15 +283,15 @@ if __name__ == "__main__":
     # trade_list = obj.get_trade_list()
     # print(trade_list)
 
-    exchange_info = obj.get_exchange_info().get('symbols')
-    symbols_filters = {pair_info['symbol']: {
-        'minPrice': float(pair_info['filters'][0]['tickSize']),  # минимальная цена  todo обработать
-        'minQty': float(pair_info['filters'][2]['stepSize']),  # минимальное количество
-    } for pair_info in exchange_info}
-
-    import pprint
-
-    pprint.pprint(symbols_filters)
+    # exchange_info = obj.get_exchange_info().get('symbols')
+    # symbols_filters = {pair_info['symbol']: {
+    #     'minPrice': float(pair_info['filters'][0]['tickSize']),  # минимальная цена
+    #     'minQty': float(pair_info['filters'][2]['stepSize']),  # минимальное количество
+    # } for pair_info in exchange_info}
+    #
+    # import pprint
+    #
+    # pprint.pprint(symbols_filters)
     # pprint.pprint(exchange_info)
     # print([filt['stepSize'] for filt in symbols_filters.values()])
 
