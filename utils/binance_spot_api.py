@@ -49,7 +49,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
         try:
             average_price_req_result = average_price_req.json()
             if 'price' in average_price_req_result:
-                return average_price_req_result.get('price')
+                return float(average_price_req_result.get('price'))
 
         except Exception as e:
             # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
