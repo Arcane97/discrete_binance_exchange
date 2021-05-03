@@ -111,15 +111,17 @@ class DiscreteBinanceExchangeModel(QObject):
             print('Сделайте меньше разбиений')  # todo Лог
             return
 
-        while self._is_running_trades and self._currency_amount_spot > min_qty:
+        while self._is_running_trades and \
+                self._currency_amount_spot > min_qty and self._currency_amount_futures > min_qty:
             # если после следующей сделки количество валюты будет меньше минимума,
             # используем всю оставшуюся валюту
-            if self._currency_amount_spot - delta_amount < min_qty:
-                delta_amount = round(self._currency_amount_spot, exponent)
+            if min(self._currency_amount_spot, self._currency_amount_futures) - delta_amount < min_qty:
+                delta_amount = round(min(self._currency_amount_spot, self._currency_amount_futures), exponent)
 
             self._trade(delta_amount)
 
             self.currency_amount_spot -= delta_amount
+            self.currency_amount_futures -= delta_amount
 
     def stop_trades(self):
         """ Принудительная остановка торгов
