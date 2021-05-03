@@ -20,7 +20,8 @@ class DiscreteBinanceExchangeModel(QObject):
         self._currency_pair = "BTCUSDT"
         # количество валюты на спотовом рынке
         self._currency_amount_spot = 2
-        # todo добавить количество валюты во фьючерсах
+        # количество валюты во фьючерсах
+        self._currency_amount_futures = 2
         # число разбиений
         self._number_of_splits = 10
 
@@ -32,6 +33,8 @@ class DiscreteBinanceExchangeModel(QObject):
 
         # количество валюты на спотовом рынке изменилось
         self._currency_amount_spot_changed = pyqtSignal()
+        # количество валюты на фьючерсах изменилось
+        self._currency_amount_futures_changed = pyqtSignal()
 
     @property
     def deal_type(self):
@@ -60,6 +63,18 @@ class DiscreteBinanceExchangeModel(QObject):
             self._currency_amount_spot_changed.emit()
         else:
             self._currency_amount_spot = val
+
+    @property
+    def currency_amount_futures(self):
+        return self._currency_amount_futures
+
+    @currency_amount_futures.setter
+    def currency_amount_futures(self, val):
+        if not isclose(self._currency_amount_futures, val, rel_tol=0, abs_tol=0.001):
+            self._currency_amount_futures = val
+            self._currency_amount_futures_changed.emit()
+        else:
+            self._currency_amount_futures = val
 
     @property
     def number_of_splits(self):
