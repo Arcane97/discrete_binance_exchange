@@ -21,8 +21,8 @@ class DiscreteBinanceExchangeModel(QObject):
         self._deal_type = "SELL"
         # валютная пара
         self._currency_pair = "BTCUSDT"
-        # количество валюты
-        self._currency_amount = 2
+        # количество валюты на спотовом рынке
+        self._currency_amount_spot = 2
         # todo добавить количество валюты во фьючерсах
         # число разбиений
         self._number_of_splits = 10
@@ -50,16 +50,16 @@ class DiscreteBinanceExchangeModel(QObject):
         self._currency_pair = val
 
     @property
-    def currency_amount(self):
-        return self._currency_amount
+    def currency_amount_spot(self):
+        return self._currency_amount_spot
 
-    @currency_amount.setter
-    def currency_amount(self, val):
-        if not isclose(self._currency_amount, val, rel_tol=0, abs_tol=0.001):
-            self._currency_amount = val
+    @currency_amount_spot.setter
+    def currency_amount_spot(self, val):
+        if not isclose(self._currency_amount_spot, val, rel_tol=0, abs_tol=0.001):
+            self._currency_amount_spot = val
             self.currency_amount_changed.emit()
         else:
-            self._currency_amount = val
+            self._currency_amount_spot = val
 
     @property
     def number_of_splits(self):
@@ -91,20 +91,20 @@ class DiscreteBinanceExchangeModel(QObject):
         min_qty = max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQty'],
                       BINANCE_FUTURES_FILTERS[self._currency_pair]['minQty'])
         # количество валюты в порции
-        delta_amount = round(self._currency_amount / self._number_of_splits, exponent)
+        delta_amount = round(self._currency_amount_spot / self._number_of_splits, exponent)
         if delta_amount < min_qty:
             print('Сделайте меньше разбиений')  # todo Лог
             return
 
-        while self._is_running_trades and self._currency_amount > min_qty:
+        while self._is_running_trades and self._currency_amount_spot > min_qty:
             # если после следующей сделки количество валюты будет меньше минимума,
             # используем всю оставшуюся валюту
-            if self._currency_amount - delta_amount < min_qty:
-                delta_amount = round(self._currency_amount, exponent)
+            if self._currency_amount_spot - delta_amount < min_qty:
+                delta_amount = round(self._currency_amount_spot, exponent)
 
             self._trade(delta_amount)
 
-            self.currency_amount -= delta_amount
+            self.currency_amount_spot -= delta_amount
 
     def stop_trades(self):
         """ Принудительная остановка торгов
