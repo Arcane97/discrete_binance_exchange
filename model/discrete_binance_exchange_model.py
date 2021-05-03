@@ -1,3 +1,4 @@
+import logging
 from math import isclose
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -13,7 +14,8 @@ class DiscreteBinanceExchangeModel(QObject):
     При продаже валюты на спотовом рынке, берется лонг (закрывается шорт).
     При покупке на спотовом рынке, берется шорт (закрывается лонг).
     """
-    def __init__(self, deal_type, currency_pair, currency_amount_spot, currency_amount_futures, number_of_splits):
+    def __init__(self, deal_type, currency_pair, currency_amount_spot, currency_amount_futures, number_of_splits,
+                 logger_name="discrete_binance_exchange"):
         super().__init__()
 
         # тип сделки (покупка или продажа)
@@ -29,6 +31,9 @@ class DiscreteBinanceExchangeModel(QObject):
 
         # считываем параметры из файла
         self._read_param_file()
+
+        # логгер
+        self._logger = logging.getLogger(logger_name)
 
         # флаг. запущены торги
         self._is_running_trades = True
@@ -100,24 +105,37 @@ class DiscreteBinanceExchangeModel(QObject):
         """ Выполнение торга
         :param amount: количество
         """
+        self._logger.info(f'Выполнение торгов. Количество {amount}')
+
         spot_result = self._binance_spot_api.place_order(amount)
+        self._logger.info(f'Результат выполнения торга на спотовом рынке: {spot_result}')
 
         futures_result = self._binance_futures_api.place_order(amount)
+        self._logger.info(f'Результат выполнения торга на фьючерсном рынке: {futures_result}')
 
     def start_trades(self):
         """ Старт торгов с разбиением
         """
+        self._logger.info(f'Старт торгов с разбиением. Тип: {self.deal_type}. Пара: {self._currency_pair}. '
+                          f'Количество валюты на спотовом рынке: {self._currency_amount_spot} '
+                          f'Количество валюты на фьючерсном рынке: {self._currency_amount_futures} '
+                          f'Количество разбиений: {self._number_of_splits}')
         self._is_running_trades = True
         # количество цифр после запятой у минимального количества валюты
         exponent = -max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQtyExponent'],
                         BINANCE_FUTURES_FILTERS[self._currency_pair]['minQtyExponent'])
+        self._logger.debug(f'Экспонента: {exponent}')
         # минимальное количество валюты
         min_qty = max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQty'],
                       BINANCE_FUTURES_FILTERS[self._currency_pair]['minQty'])
+        self._logger.debug(f'Минимальное количество валюты: {min_qty}')
         # количество валюты в порции
         delta_amount = round(self._currency_amount_spot / self._number_of_splits, exponent)
+        self._logger.debug(f'Количество валюты в порции: {delta_amount}')
         if delta_amount < min_qty:
-            print('Сделайте меньше разбиений')  # todo Лог
+            self._logger.info(f'Сделайте меньше разбиений! '
+                              f'Максимальное количество разбиений на данное количество валюты: '
+                              f'{round(self._currency_amount_spot / min_qty)}')
             return
 
         while self._is_running_trades and \
@@ -126,16 +144,22 @@ class DiscreteBinanceExchangeModel(QObject):
             # используем всю оставшуюся валюту
             if min(self._currency_amount_spot, self._currency_amount_futures) - delta_amount < min_qty:
                 delta_amount = round(min(self._currency_amount_spot, self._currency_amount_futures), exponent)
+                self._logger.info(f'Валюты останось мало, поэтому используем всю оставшуюся валюту: {delta_amount}')
 
             self._trade(delta_amount)
 
             self.currency_amount_spot -= delta_amount
             self.currency_amount_futures -= delta_amount
+            self._logger.info(f'После торгов останось: Спот: {self._currency_amount_spot} Фьючерс: {self._currency_amount_futures}')
+            # todo задержка между торгами?
+
+        self._logger.info('Конец торгов с разбиением')
 
     def stop_trades(self):
         """ Принудительная остановка торгов
         """
         self._is_running_trades = False
+        self._logger.info('Принудительная остановка торгов')
 
     def save_param_to_file(self):
         """ Сохранение параметров в файл
