@@ -100,7 +100,9 @@ class DiscreteBinanceExchangeModel(QObject):
         """ Выполнение торга
         :param amount: количество
         """
-        print(amount)
+        spot_result = self._binance_spot_api.place_order(amount)
+
+        futures_result = self._binance_futures_api.place_order(amount)
 
     def start_trades(self):
         """ Старт торгов с разбиением
