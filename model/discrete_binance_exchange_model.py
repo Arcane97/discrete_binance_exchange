@@ -105,21 +105,21 @@ class DiscreteBinanceExchangeModel(QObject):
         # минимальное количество валюты
         min_qty = max(BINANCE_SPOT_FILTERS[self._currency_pair]['minQty'],
                       BINANCE_FUTURES_FILTERS[self._currency_pair]['minQty'])
-        # количество валюты в порции
-        delta_amount = round(self._currency_amount_spot / self._number_of_splits, exponent)
-        if delta_amount < min_qty:
+        # количество валюты в порции на спотовом рынке
+        delta_amount_spot = round(self._currency_amount_spot / self._number_of_splits, exponent)
+        if delta_amount_spot < min_qty:
             print('Сделайте меньше разбиений')  # todo Лог
             return
 
         while self._is_running_trades and self._currency_amount_spot > min_qty:
             # если после следующей сделки количество валюты будет меньше минимума,
             # используем всю оставшуюся валюту
-            if self._currency_amount_spot - delta_amount < min_qty:
-                delta_amount = round(self._currency_amount_spot, exponent)
+            if self._currency_amount_spot - delta_amount_spot < min_qty:
+                delta_amount_spot = round(self._currency_amount_spot, exponent)
 
-            self._trade(delta_amount)
+            self._trade(delta_amount_spot)
 
-            self.currency_amount_spot -= delta_amount
+            self.currency_amount_spot -= delta_amount_spot
 
     def stop_trades(self):
         """ Принудительная остановка торгов
