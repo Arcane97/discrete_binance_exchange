@@ -1,6 +1,8 @@
 from math import isclose
 from PyQt5.QtCore import QObject, pyqtSignal
 
+from utils.binance_futures_api import BinanceFuturesAPI
+from utils.binance_spot_api import BinanceSpotAPI
 from utils.constants import BINANCE_SPOT_FILTERS, BINANCE_FUTURES_FILTERS
 
 
@@ -30,6 +32,11 @@ class DiscreteBinanceExchangeModel(QObject):
 
         # флаг. запущены торги
         self._is_running_trades = True
+
+        # апи спотового рынка
+        self._binance_spot_api = BinanceSpotAPI(deal_type, currency_pair)
+        # апи фьючерсов
+        self._binance_futures_api = BinanceFuturesAPI(deal_type, currency_pair)
 
         # количество валюты на спотовом рынке изменилось
         self._currency_amount_spot_changed = pyqtSignal()
