@@ -11,19 +11,19 @@ class DiscreteBinanceExchangeModel(QObject):
     При продаже валюты на спотовом рынке, берется лонг (закрывается шорт).
     При покупке на спотовом рынке, берется шорт (закрывается лонг).
     """
-    def __init__(self):
+    def __init__(self, deal_type, currency_pair, currency_amount_spot, currency_amount_futures, number_of_splits):
         super().__init__()
 
         # тип сделки (покупка или продажа)
-        self._deal_type = "SELL"
+        self._deal_type = deal_type
         # валютная пара
-        self._currency_pair = "BTCUSDT"
+        self._currency_pair = currency_pair
         # количество валюты на спотовом рынке
-        self._currency_amount_spot = 2
+        self._currency_amount_spot = currency_amount_spot
         # количество валюты во фьючерсах
-        self._currency_amount_futures = 2
+        self._currency_amount_futures = currency_amount_futures
         # число разбиений
-        self._number_of_splits = 10
+        self._number_of_splits = number_of_splits
 
         # считываем параметры из файла
         self._read_param_file()
@@ -135,5 +135,5 @@ class DiscreteBinanceExchangeModel(QObject):
 
 
 if __name__ == "__main__":
-    obj = DiscreteBinanceExchangeModel()
+    obj = DiscreteBinanceExchangeModel("SELL", "BTCUSDT", 2, 2, 10)
     obj.start_trades()
