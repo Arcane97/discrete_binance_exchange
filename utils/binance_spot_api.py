@@ -45,6 +45,9 @@ class BinanceSpotAPI(BinanceBaseAPI):
         url = f'{BINANCE_SPOT_API_URL}/api/v1/depth?symbol={self._currency_pair}&limit=5000'
         glass_req_result = self._make_get_request(url)
 
+        if not isinstance(glass_req_result, dict):
+            return None
+
         if self._deal_type == "SELL":
             glass = glass_req_result.get('bids')
         else:
@@ -244,8 +247,8 @@ if __name__ == "__main__":
 
     # create_test_json_file()
 
-    obj = BinanceSpotAPI("SELL", "BTCUSDT")
-    # result_of_placement_order = obj.place_order(1, 0.1)
+    obj = BinanceSpotAPI("BUY", "BTCBUSD")
+    # result_of_placement_order = obj.place_order(0.5)
     # print(result_of_placement_order)
 
     # price = obj.get_satisfy_price()
@@ -266,5 +269,6 @@ if __name__ == "__main__":
     # pprint.pprint(exchange_info)
     # print([filt['stepSize'] for filt in symbols_filters.values()])
 
-    # balance = obj.get_balance()
-    # print(balance)
+    balance = obj.get_balance()
+    import pprint
+    pprint.pprint(balance)
