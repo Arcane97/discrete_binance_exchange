@@ -31,65 +31,24 @@ class BinanceSpotAPI(BinanceBaseAPI):
     def get_average_price(self):
         """ Получение средней цены за 5 минут
         """
-        try:
-            query = f'{BINANCE_SPOT_API_URL}/api/v3/avgPrice?symbol={self._currency_pair}'
+        url = f'{BINANCE_SPOT_API_URL}/api/v3/avgPrice?symbol={self._currency_pair}'
+        average_price_req_result = self._make_get_request(url)
 
-            s = requests.Session()
-            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
-                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
-            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
-            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
-
-            average_price_req = s.get(query)
-
-        except Exception:
-            self._logger.error('Ошибка при получении средней цены за 5 минут', exc_info=True)
-            return None
-
-        # попытка расшифровать json файл
-        try:
-            average_price_req_result = average_price_req.json()
-            if 'price' in average_price_req_result:
-                return float(average_price_req_result.get('price'))
-
-        except Exception as e:
-            self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
-            return None
+        if 'price' in average_price_req_result:
+            return float(average_price_req_result.get('price'))
         return None
 
     def get_binance_glass(self):
         """ Получение стакана на бинансе
         :return: стакан на бинансе
         """
-        try:
-            # получаем 5000 ордеров
-            limit = '&limit=5000'
-            # получаем стакан с ордерами на покупку
-            query = BINANCE_SPOT_API_URL + '/api/v1/depth?symbol=' + self._currency_pair + limit
+        url = f'{BINANCE_SPOT_API_URL}/api/v1/depth?symbol={self._currency_pair}&limit=5000'
+        glass_req_result = self._make_get_request(url)
 
-            s = requests.Session()
-            retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
-                            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"])
-            s.mount('http://', TimeoutHTTPAdapter(max_retries=retries))
-            s.mount('https://', TimeoutHTTPAdapter(max_retries=retries))
-
-            glass_req = s.get(query)
-
-        except Exception as e:
-            self._logger.error('Ошибка при получении данных из стакана на бинансе', exc_info=True)
-            return None
-
-        # попытка расшифровать json файл
-        try:
-            glass_req_result = glass_req.json()
-            if self._deal_type == "SELL":
-                glass = glass_req_result.get('bids')
-            else:
-                glass = glass_req_result.get('asks')
-
-        except Exception as e:
-            self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
-            return None
+        if self._deal_type == "SELL":
+            glass = glass_req_result.get('bids')
+        else:
+            glass = glass_req_result.get('asks')
 
         return glass if glass else None
 

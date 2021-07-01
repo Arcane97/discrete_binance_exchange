@@ -25,7 +25,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         """ Получение стакана на бинансе
         :return: стакан на бинансе
         """
-        url = BINANCE_FUTURES_API_URL + '/fapi/v1/depth?symbol=' + self._currency_pair + '&limit=1000'
+        url = f'{BINANCE_FUTURES_API_URL}/fapi/v1/depth?symbol={self._currency_pair}&limit=1000'
         glass_req_result = self._make_get_request(url)
 
         if not isinstance(glass_req_result, dict):
@@ -41,7 +41,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
     def get_average_price(self):
         """ Получение средней цены
         """
-        url = BINANCE_FUTURES_API_URL + "/fapi/v1/premiumIndex?symbol=" + self._currency_pair
+        url = f'{BINANCE_FUTURES_API_URL}/fapi/v1/premiumIndex?symbol={self._currency_pair}'
         average_price_req_result = self._make_get_request(url)
 
         if not isinstance(average_price_req_result, dict):
