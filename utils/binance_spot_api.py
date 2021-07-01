@@ -115,7 +115,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         try:
             result = response.json()
-        except Exception as e:
+        except Exception:
             self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
             self._logger.error(f'Ответ: {response}')
             return str(response)
@@ -137,13 +137,13 @@ class BinanceSpotAPI(BinanceBaseAPI):
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
+            except Exception:
                 self._logger.error('При попытке получить баланс произошла ошибка', exc_info=True)
                 time.sleep(2)
                 self._logger.info('Снова посылаем запрос')
         try:
             result = response.json()
-        except Exception as e:
+        except Exception:
             self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
             self._logger.error(f'Ответ: {response}')
             return str(response)
@@ -198,14 +198,14 @@ class BinanceSpotAPI(BinanceBaseAPI):
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
+            except Exception:
                 self._logger.error('При попытке получения общей информации произошла ошибка', exc_info=True)
                 time.sleep(2)
                 self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
-        except Exception as e:
+        except Exception:
             self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
             self._logger.error(f'Ответ: {response}')
             return str(response)
