@@ -73,7 +73,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return result
 
-    def get_satisfy_price(self):  # todo try except обратотать None
+    def get_satisfy_price(self):
         """ Получение удовлетворяющей цены для точной покупки или продажи
         Чтобы ордер сразу совершился
         """
@@ -82,8 +82,12 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         multiplier_down = BINANCE_FUTURES_FILTERS[self._currency_pair]['multiplierDown']
         # получение стакана
         glass = self.get_binance_glass()
+        if glass is None:
+            return None
         # получение средней цены
         average_price = self.get_average_price()
+        if average_price is None:
+            return None
         # ограничение цены сверху
         top_limit = average_price * multiplier_up
         # ограничение цены снизу
@@ -95,6 +99,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         filtered_glass = list(filter(mapping_percent_price_filter, glass))
 
         if len(filtered_glass) == 0:
+            self._logger.error('Ни один из ордеров в стакане не подходит под фильтр')
             return None
         if len(filtered_glass) == 1:
             return float(filtered_glass[0][0])
@@ -138,7 +143,11 @@ class BinanceFuturesAPI(BinanceBaseAPI):
     def place_order(self, quantity):
         url = "https://testnet.binancefuture.com/fapi/v1/order"  # todo
         # удовлетворяющая цена
-        price = self.get_satisfy_price()
+        is_complete = False
+        price = None
+        while not is_complete:
+            price = self.get_satisfy_price()
+            is_complete = True if price else False
 
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {
