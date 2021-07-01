@@ -14,7 +14,7 @@ BINANCE_PRIVATE_API_SPOT_URL = 'https://testnet.binance.vision'  # https://api.b
 
 class BinanceSpotAPI(BinanceBaseAPI):
     def __init__(self, deal_type, currency_pair, logger_name="binance_spot_api"):
-        super().__init__(dict_key_prefix='binance_spot')
+        super().__init__(dict_key_prefix='binance_spot', logger_name=f'{logger_name}.binance_spot_api')
 
         # тип сделки (покупка или продажа)
         self._deal_type = deal_type

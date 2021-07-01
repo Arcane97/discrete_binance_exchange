@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import requests
 import time
 import urllib.parse
@@ -10,17 +11,17 @@ from utils.timeout_http_adapter import TimeoutHTTPAdapter
 
 from utils.constants import SETTINGS_FILE_NAME
 
-# todo log
-
 
 class BinanceBaseAPI:
-    def __init__(self, dict_key_prefix='binance'):
+    def __init__(self, dict_key_prefix='binance', logger_name="binance_base_api"):
         self._api_key = None
         self._api_secret = None
 
         self._dict_key_prefix = dict_key_prefix
 
-    def _read_api_keys_from_file(self):  # todo подумать над реализвацией сохранения api ключей
+        self._logger = logging.getLogger(logger_name)
+
+    def _read_api_keys_from_file(self):  # todo подумать над реализацией сохранения api ключей
         """ Считывание апи ключей из файла
         """
         with open(SETTINGS_FILE_NAME, "r") as file:
@@ -64,18 +65,16 @@ class BinanceBaseAPI:
 
             req = s.get(url)
 
-        except Exception as e:
-            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
-            # self._logger.error(e)
+        except Exception:
+            self._logger.error('Ошибка при запросе в публичный апи ', exc_info=True)
             return None
 
         # попытка расшифровать json файл
         try:
             req_result = req.json()
 
-        except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
-            # self._logger.error(e)
+        except Exception:
+            self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
             return None
 
         return req_result
