@@ -5,8 +5,8 @@ import time
 from utils.binance_base_api import BinanceBaseAPI
 from utils.constants import BINANCE_FUTURES_FILTERS
 
-BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
-# BINANCE_FUTURES_API_URL = "https://testnet.binancefuture.com"
+# BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
+BINANCE_FUTURES_API_URL = "https://testnet.binancefuture.com"
 
 
 class BinanceFuturesAPI(BinanceBaseAPI):
@@ -163,7 +163,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info(f'Попытка поставить позицию: цена {price}, количество: {quantity}, тип: {self._deal_type}')
             try:
                 response = requests.request(method='POST', url=url, params=payload, headers=headers)
                 is_complete = True
