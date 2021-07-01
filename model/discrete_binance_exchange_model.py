@@ -46,12 +46,10 @@ class DiscreteBinanceExchangeModel(QObject):
         # апи спотового рынка
         self._binance_spot_api = BinanceSpotAPI(deal_type, currency_pair, logger_name)
         # апи фьючерсов
-        self._binance_futures_api = BinanceFuturesAPI(deal_type, currency_pair)
-
-        # количество валюты на спотовом рынке изменилось
-        self._currency_amount_spot_changed = pyqtSignal()
-        # количество валюты на фьючерсах изменилось
-        self._currency_amount_futures_changed = pyqtSignal()
+        if deal_type == "SELL":
+            self._binance_futures_api = BinanceFuturesAPI("BUY", currency_pair, logger_name)
+        else:
+            self._binance_futures_api = BinanceFuturesAPI("SELL", currency_pair, logger_name)
 
     @property
     def deal_type(self):
