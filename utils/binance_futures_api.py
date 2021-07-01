@@ -1,4 +1,6 @@
-import requests, time
+import logging
+import requests
+import time
 
 from utils.binance_base_api import BinanceBaseAPI
 from utils.constants import BINANCE_FUTURES_FILTERS
@@ -8,8 +10,8 @@ BINANCE_FUTURES_API_URL = "https://fapi.binance.com"
 
 
 class BinanceFuturesAPI(BinanceBaseAPI):
-    def __init__(self, deal_type, currency_pair):
-        super().__init__(dict_key_prefix='binance_futures')
+    def __init__(self, deal_type, currency_pair, logger_name="binance_futures_api"):
+        super().__init__(dict_key_prefix='binance_futures', logger_name=f'{logger_name}.binance_futures_api')
 
         # тип сделки (покупка или продажа)  BUY - long, SELL - short
         self._deal_type = deal_type
@@ -20,6 +22,8 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         self._api_secret = None
 
         self._read_api_keys_from_file()
+
+        self._logger = logging.getLogger(f'{logger_name}.binance_futures_api')
 
     def get_binance_glass(self):
         """ Получение стакана на бинансе
@@ -49,7 +53,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return float(average_price_req_result.get('markPrice'))
 
-    def get_binance_futures_history(self):  # todo стакан
+    def get_binance_futures_history(self): # устаревшая функция
         url = 'https://fapi.binance.com/fapi/v1/trades?symbol=' + self._currency_pair
         is_complete = False
         result = None
@@ -57,21 +61,19 @@ class BinanceFuturesAPI(BinanceBaseAPI):
             try:
                 response = requests.get(url)
                 is_complete = True
-            except Exception as e:
-                # self._logger.error('При получении данных из истории binance futures возникла ошибка')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('При получении данных из истории binance futures возникла ошибка', exc_info=True)
                 continue
 
             try:
                 result = response.json()
-            except Exception as e:
-                # self._logger.error('Ошибка в попытке расшифровать json файл')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
                 time.sleep(2)
 
         return result
 
-    def get_satisfy_price(self):
+    def get_satisfy_price(self):  # todo try except обратотать None
         """ Получение удовлетворяющей цены для точной покупки или продажи
         Чтобы ордер сразу совершился
         """
@@ -99,7 +101,7 @@ class BinanceFuturesAPI(BinanceBaseAPI):
 
         return float(filtered_glass[len(filtered_glass)//2][0])
 
-    def get_price(self, is_buy=True):
+    def get_price(self, is_buy=True):  # устаревшая функция
         history = self.get_binance_futures_history()
         for deal in reversed(history):
             if deal['isBuyerMaker'] == is_buy:
@@ -115,21 +117,20 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info('Попытка получения общей информации')
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('При попытке получения общей информации произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
-        except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
-            # self._logger.error('response: ', response)
+        except Exception:
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         return result
@@ -153,23 +154,20 @@ class BinanceFuturesAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
             try:
                 response = requests.request(method='POST', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('При запросе к binance произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
-        except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл')
-            # self._logger.error(traceback.format_exc())
-            # self._logger.error(e)
-            # self._logger.error(response)
+        except Exception:
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         return result
