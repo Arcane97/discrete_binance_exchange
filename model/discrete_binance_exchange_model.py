@@ -142,7 +142,7 @@ class DiscreteBinanceExchangeModel(QObject):
             return
 
         while self._is_running_trades and \
-                self._currency_amount_spot > min_qty and self._currency_amount_futures > min_qty:
+                self._currency_amount_spot >= min_qty and self._currency_amount_futures >= min_qty:
             # если после следующей сделки количество валюты будет меньше минимума,
             # используем всю оставшуюся валюту
             if min(self._currency_amount_spot, self._currency_amount_futures) - delta_amount < min_qty:
