@@ -56,13 +56,16 @@ class BinanceSpotAPI(BinanceBaseAPI):
         """ Получение удовлетворяющей цены для точной покупки или продажи
         Чтобы ордер сразу совершился
         """
-        # todo try except
         # multiplierDown 0.2
         # multiplierUp 5
         # получение стакана
         glass = self.get_binance_glass()
+        if glass is None:
+            return None
         # получение средней цены
         average_price = self.get_average_price()
+        if average_price is None:
+            return None
         # ограничение цены сверху
         top_limit = average_price * 5
         # ограничение цены снизу
@@ -74,6 +77,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
         filtered_glass = list(filter(mapping_percent_price_filter, glass))
 
         if len(filtered_glass) == 0:
+            self._logger.error('Ни один из ордеров в стакане не подходит под фильтр')
             return None
         if len(filtered_glass) == 1:
             return float(filtered_glass[0][0])
@@ -84,7 +88,11 @@ class BinanceSpotAPI(BinanceBaseAPI):
         """ Постановка ордера
         """
         # Получение цены
-        price = self.get_satisfy_price()
+        is_complete = False
+        price = None
+        while not is_complete:
+            price = self.get_satisfy_price()
+            is_complete = True if price else False
 
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/order'
         headers = {'X-MBX-APIKEY': self._api_key}
@@ -103,7 +111,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
         is_complete = False
         response = None
-        while not is_complete:
+        while not is_complete:  # todo подумать над остановкой бесконечного цикла принудительно
             self._logger.info(f'Попытка поставить позицию: цена {price}, количество: {quantity}, тип: {self._deal_type}')
             try:
                 response = requests.request(method='POST', url=url, params=payload, headers=headers)
