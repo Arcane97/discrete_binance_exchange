@@ -14,6 +14,11 @@ class DiscreteBinanceExchangeModel(QObject):
     При продаже валюты на спотовом рынке, берется лонг (закрывается шорт).
     При покупке на спотовом рынке, берется шорт (закрывается лонг).
     """
+    # количество валюты на спотовом рынке изменилось
+    _currency_amount_spot_changed = pyqtSignal()
+    # количество валюты на фьючерсах изменилось
+    _currency_amount_futures_changed = pyqtSignal()
+
     def __init__(self, deal_type, currency_pair, currency_amount_spot, currency_amount_futures, number_of_splits,
                  logger_name="discrete_binance_exchange"):
         super().__init__()
