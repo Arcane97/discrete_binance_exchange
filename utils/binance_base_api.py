@@ -75,6 +75,7 @@ class BinanceBaseAPI:
 
         except Exception:
             self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
+            self._logger.error(f'Ответ: {req}')
             return None
 
         return req_result
