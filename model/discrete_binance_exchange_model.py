@@ -40,6 +40,11 @@ class DiscreteBinanceExchangeModel(QObject):
         # логгер
         self._logger = logging.getLogger(logger_name)
 
+        # todo убрать вывод в консоль
+        self._logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        self._logger.addHandler(handler)
+
         # флаг. запущены торги
         self._is_running_trades = True
 
@@ -171,5 +176,5 @@ class DiscreteBinanceExchangeModel(QObject):
 
 
 if __name__ == "__main__":
-    obj = DiscreteBinanceExchangeModel("SELL", "BTCUSDT", 2, 2, 10)
+    obj = DiscreteBinanceExchangeModel("SELL", "BTCUSDT", 0.005, 0.005, 2)
     obj.start_trades()
