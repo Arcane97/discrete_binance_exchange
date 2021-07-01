@@ -149,13 +149,13 @@ class DiscreteBinanceExchangeModel(QObject):
             # используем всю оставшуюся валюту
             if min(self._currency_amount_spot, self._currency_amount_futures) - delta_amount < min_qty:
                 delta_amount = round(min(self._currency_amount_spot, self._currency_amount_futures), exponent)
-                self._logger.info(f'Валюты останось мало, поэтому используем всю оставшуюся валюту: {delta_amount}')
+                self._logger.info(f'Валюты осталось мало, поэтому используем всю оставшуюся валюту: {delta_amount}')
 
             self._trade(delta_amount)
 
             self.currency_amount_spot -= delta_amount
             self.currency_amount_futures -= delta_amount
-            self._logger.info(f'После торгов останось: Спот: {self._currency_amount_spot} Фьючерс: {self._currency_amount_futures}')
+            self._logger.info(f'После торгов осталось: Спот: {self._currency_amount_spot} Фьючерс: {self._currency_amount_futures}')
             # todo задержка между торгами?
 
         self._logger.info('Конец торгов с разбиением')
