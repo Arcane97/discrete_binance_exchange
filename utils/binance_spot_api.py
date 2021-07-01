@@ -1,10 +1,10 @@
-import requests, time
+import logging
+import requests
+import time
 from requests.packages.urllib3.util.retry import Retry
 
-from utils.timeout_http_adapter import TimeoutHTTPAdapter
-
 from utils.binance_base_api import BinanceBaseAPI
-
+from utils.timeout_http_adapter import TimeoutHTTPAdapter
 
 # BINANCE_SPOT_API_URL = "https://api.binance.com"
 BINANCE_SPOT_API_URL = "https://testnet.binance.vision"
@@ -13,7 +13,7 @@ BINANCE_PRIVATE_API_SPOT_URL = 'https://testnet.binance.vision'  # https://api.b
 
 
 class BinanceSpotAPI(BinanceBaseAPI):
-    def __init__(self, deal_type, currency_pair):
+    def __init__(self, deal_type, currency_pair, logger_name="binance_spot_api"):
         super().__init__(dict_key_prefix='binance_spot')
 
         # тип сделки (покупка или продажа)
@@ -25,6 +25,8 @@ class BinanceSpotAPI(BinanceBaseAPI):
         self._api_secret = None
 
         self._read_api_keys_from_file()
+
+        self._logger = logging.getLogger(f'{logger_name}.binance_spot_api')
 
     def get_average_price(self):
         """ Получение средней цены за 5 минут
@@ -40,9 +42,8 @@ class BinanceSpotAPI(BinanceBaseAPI):
 
             average_price_req = s.get(query)
 
-        except Exception as e:
-            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
-            # self._logger.error(e)
+        except Exception:
+            self._logger.error('Ошибка при получении средней цены за 5 минут', exc_info=True)
             return None
 
         # попытка расшифровать json файл
@@ -52,8 +53,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
                 return float(average_price_req_result.get('price'))
 
         except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
-            # self._logger.error(e)
+            self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
             return None
         return None
 
@@ -76,8 +76,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
             glass_req = s.get(query)
 
         except Exception as e:
-            # self._logger.error('Ошибка при получении данных из стакана на бинансе')
-            # self._logger.error(e)
+            self._logger.error('Ошибка при получении данных из стакана на бинансе', exc_info=True)
             return None
 
         # попытка расшифровать json файл
@@ -89,8 +88,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
                 glass = glass_req_result.get('asks')
 
         except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл бинанс')
-            # self._logger.error(e)
+            self._logger.error('Ошибка в попытке расшифровать json файл бинанс', exc_info=True)
             return None
 
         return glass if glass else None
@@ -99,6 +97,7 @@ class BinanceSpotAPI(BinanceBaseAPI):
         """ Получение удовлетворяющей цены для точной покупки или продажи
         Чтобы ордер сразу совершился
         """
+        # todo try except
         # multiplierDown 0.2
         # multiplierUp 5
         # получение стакана
@@ -146,26 +145,28 @@ class BinanceSpotAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info(f'Попытка поставить позицию: цена {price}, количество: {quantity}, тип: {self._deal_type}')
             try:
                 response = requests.request(method='POST', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('При попытке поставить позицию произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
         except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
-            # self._logger.error('response: ', response)
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         return result
 
     def get_balance(self):
+        """ Получение баланса
+        :return: список валюты (list), при ошибке текст ответа (str)
+        """
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/account'
         headers = {'X-MBX-APIKEY': self._api_key}
         payload = self._create_payload({})
@@ -173,20 +174,19 @@ class BinanceSpotAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info('Попытка получить баланс')
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
             except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+                self._logger.error('При попытке получить баланс произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
         try:
             result = response.json()
         except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
-            # self._logger.error('response: ', response)
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         if 'balances' in result:
@@ -195,6 +195,9 @@ class BinanceSpotAPI(BinanceBaseAPI):
         return result
 
     def get_trade_list(self):
+        """ Получение трейд листа
+        :return: list
+        """
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/myTrades'
         headers = {'X-MBX-APIKEY': self._api_key}
         data = {'symbol': self._currency_pair}
@@ -203,26 +206,28 @@ class BinanceSpotAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info(f'Попытка получения трейд листа. Пара: {self._currency_pair}')
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
-            except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+            except Exception:
+                self._logger.error('При попытке получения трейд листа.произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
-        except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
-            # self._logger.error('response: ', response)
+        except Exception:
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         return result
 
     def get_exchange_info(self):
+        """ Получение общей информации
+        :return:
+        """
         url = BINANCE_PRIVATE_API_SPOT_URL + '/api/v3/exchangeInfo'
         headers = {'X-MBX-APIKEY': self._api_key}
         payload = ''
@@ -230,21 +235,20 @@ class BinanceSpotAPI(BinanceBaseAPI):
         is_complete = False
         response = None
         while not is_complete:
-            # self._logger.info('Попытка поставить позицию ' + str((price, quantity, type)))
+            self._logger.info('Попытка получения общей информации')
             try:
                 response = requests.request(method='GET', url=url, params=payload, headers=headers)
                 is_complete = True
             except Exception as e:
-                # self._logger.error('При запросе к binance произошла ошибка')
-                # self._logger.error(e)
+                self._logger.error('При попытке получения общей информации произошла ошибка', exc_info=True)
                 time.sleep(2)
-                # self._logger.info('Снова посылаем запрос')
+                self._logger.info('Снова посылаем запрос')
 
         try:
             result = response.json()
         except Exception as e:
-            # self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
-            # self._logger.error('response: ', response)
+            self._logger.error('Ошибка в попытке расшифровать json файл', exc_info=True)
+            self._logger.error(f'Ответ: {response}')
             return str(response)
 
         return result

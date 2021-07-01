@@ -39,7 +39,7 @@ class DiscreteBinanceExchangeModel(QObject):
         self._is_running_trades = True
 
         # апи спотового рынка
-        self._binance_spot_api = BinanceSpotAPI(deal_type, currency_pair)
+        self._binance_spot_api = BinanceSpotAPI(deal_type, currency_pair, logger_name)
         # апи фьючерсов
         self._binance_futures_api = BinanceFuturesAPI(deal_type, currency_pair)
 
